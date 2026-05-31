@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>电气工程师每日日报表</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <div class="max-w-3xl mx-auto px-4 py-6">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-xl font-bold text-gray-800">⚡ 电气工程师日报表</h1>
+      <div class="flex items-center gap-2">
+        <button onclick="prevDay()" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 hover:bg-gray-100 transition">&lt;</button>
+        <span id="dayLabel" class="text-base font-medium text-gray-700 min-w-[180px] text-center">2026年5月31日</span>
+        <button onclick="nextDay()" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 hover:bg-gray-100 transition">&gt;</button>
+        <button onclick="goToToday()" class="text-xs px-2 py-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition whitespace-nowrap">今天</button>
+      </div>
+    </div>
+
+    <!-- Sync Status & Share -->
+    <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center gap-2">
+        <span id="syncDot" class="w-2 h-2 rounded-full bg-gray-300"></span>
+        <span id="syncText" class="text-xs text-gray-400">等待同步</span>
+      </div>
+      <button onclick="copyShareLink()" id="btnShare" class="text-xs px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition flex items-center gap-1">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+        复制分享链接
+      </button>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-4 gap-3 mb-6">
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <div class="text-xs text-gray-500 mb-1">工作项数</div>
+        <div id="totalItems" class="text-lg font-bold text-blue-600">0</div>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <div class="text-xs text-gray-500 mb-1">已完成</div>
+        <div id="completedItems" class="text-lg font-bold text-emerald-600">0</div>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <div class="text-xs text-gray-500 mb-1">进行中</div>
+        <div id="inProgressItems" class="text-lg font-bold text-amber-600">0</div>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <div class="text-xs text-gray-500 mb-1">总工时(h)</div>
+        <div id="totalHours" class="text-lg font-bold text-purple-600">0</div>
+      </div>
+    </div>
+
+    <!-- Add Record Form -->
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-6">
+      <div class="flex flex-wrap items-end gap-2">
+        <div class="flex flex-col gap-1">
+          <label class="text-xs text-gray-400">日期</label>
+          <input type="date" id="inputDate" class="border border-gray-200 rounded-lg px-3 py-2 text-sm w-36 focus:outline-none focus:ring-2 focus:ring-blue-300">
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-xs text-gray-400">项目名称</label>
+          <input type="text" id="inputProject" placeholder="项目名称" class="border border-gray-200 rounded-lg px-3 py-2 text-sm w-36 focus:outline-none focus:ring-2 focus:ring-blue-300">
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-xs text-gray-400">工作类型</label>
+          <select id="inputWorkType" class="border border-gray-200 rounded-lg px-3 py-2 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-blue-300">
+            <option value="巡检">巡检</option>
+            <option value="维修">维修</option>
+            <option value="安装">安装</option>
+            <option value="调试">调试</option>
+            <option value="设计">设计</option>
+            <option value="验收">验收</option>
+            <option value="培训">培训</option>
+            <option value="其他">其他</option>
+          </select>
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-xs text-gray-400">工时(h)</label>
+          <input type="number" id="inputHours" placeholder="0" step="0.5" min="0" max="24" class="border border-gray-200 rounded-lg px-3 py-2 text-sm w-20 focus:outline-none focus:ring-2 focus:ring-blue-300">
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-xs text-gray-400">完成状态</label>
+          <select id="inputStatus" class="border border-gray-200 rounded-lg px-3 py-2 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-blue-300">
+            <option value="已完成">已完成</option>
+            <option value="进行中">进行中</option>
+            <option value="待处理">待处理</option>
+          </select>
+        </div>
+        <div class="flex flex-col gap-1 flex-1 min-w-[160px]">
+          <label class="text-xs text-gray-400">工作内容</label>
+          <input type="text" id="inputContent" placeholder="工作内容描述" class="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-300">
+        </div>
+        <div class="flex flex-col gap-1 flex-1 min-w-[120px]">
+          <label class="text-xs text-gray-400">备注</label>
+          <input type="text" id="inputNote" placeholder="可选" class="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-300">
+        </div>
+        <button onclick="addRecord()" class="h-10 px-5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition whitespace-nowrap">+ 添加</button>
+      </div>
+    </div>
+
+    <!-- Weekly Bar Chart -->
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-6">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-sm font-medium text-gray-700">本周工作概览（每日工作项数）</span>
+        <span class="text-xs text-gray-400" id="chartWeek"></span>
+      </div>
+      <div id="chartArea" class="flex items-end gap-[3px] h-36 overflow-x-auto pb-2"></div>
+    </div>
+
+    <!-- Records List -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+        <span class="text-sm font-medium text-gray-700">工作明细</span>
+        <span id="daySummary" class="text-xs text-gray-400"></span>
+      </div>
+      <div id="recordsList" class="divide-y divide-gray-50 text-sm"></div>
+      <div id="emptyHint" class="px-4 py-12 text-center text-sm text-gray-400">暂无工作记录，添加一条吧</div>
+    </div>
+
+  </div>
+
+  <script>
+    // ========== CONFIG ==========
+    const SUPABASE_URL = 'https://xqwjzgxygwebfnaaketp.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_w4viegRNwMVHwKyOJslb5g_sswD1lFy';
+    const SUPABASE_REST = SUPABASE_URL + '/rest/v1';
+
+    // ========== STATE ==========
+    let sheetId = null;
+    let records = [];
+    let currentDate = new Date();
+
+    const workTypes = ['巡检', '维修', '安装', '调试', '设计', '验收', '培训', '其他'];
+    const statuses = ['已完成', '进行中', '待处理'];
+
+    // ========== API HELPERS ==========
+    function supabaseHeaders() {
+      return {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+        'Content-Type': 'application/json'
+      };
+    }
+
+    async function apiGet(path) {
+      const res = await fetch(SUPABASE_REST + path, { headers: supabaseHeaders() });
+      if (!res.ok) throw new Error('API Error: ' + res.status);
+      return res.json();
+    }
+
+    async function apiPost(path, body, returnRow) {
+      const headers = supabaseHeaders();
+      if (returnRow) headers['Prefer'] = 'return=representation';
+      const res = await fetch(SUPABASE_REST + path, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) throw new Error('API Error: ' + res.status);
+      if (returnRow) {
+        const location = res.headers.get('Location');
+        if (location) {
+          const rowRes = await fetch(SUPABASE_URL + location, { headers: supabaseHeaders() });
+          return rowRes.ok ? rowRes.json() : null;
+        }
+        return res.json();
+      }
+      return null;
+    }
+
+    async function apiDelete(path) {
+      const res = await fetch(SUPABASE_REST + path, {
+        method: 'DELETE',
+        headers: supabaseHeaders()
+      });
+      if (!res.ok) throw new Error('API Error: ' + res.status);
+    }
+
+    // ========== SHEET MANAGEMENT ==========
+    function getSheetIdFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('sheet');
+    }
+
+    async function createSheet() {
+      const rows = await apiPost('/ee_sheets', { name: '电气工程师日报表' }, true);
+      if (rows && rows.length > 0) {
+        sheetId = rows[0].id;
+        const url = new URL(window.location);
+        url.searchParams.set('sheet', sheetId);
+        window.history.replaceState({}, '', url.toString());
+        return sheetId;
+      }
+      throw new Error('Failed to create sheet');
+    }
+
+    async function verifySheet(id) {
+      try {
+        const rows = await apiGet('/ee_sheets?id=eq.' + encodeURIComponent(id));
+        return rows.length > 0;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    // ========== SYNC STATUS ==========
+    function setSyncStatus(status, text) {
+      const dot = document.getElementById('syncDot');
+      const txt = document.getElementById('syncText');
+      dot.className = 'w-2 h-2 rounded-full ' + (
+        status === 'synced' ? 'bg-emerald-400' :
+        status === 'syncing' ? 'bg-amber-400 animate-pulse' :
+        status === 'error' ? 'bg-red-400' : 'bg-gray-300'
+      );
+      txt.textContent = text;
+    }
+
+    // ========== DATE HELPERS ==========
+    function formatDate(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return y + '-' + m + '-' + day;
+    }
+
+    function formatDateCN(d) {
+      const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+      const y = d.getFullYear();
+      const m = d.getMonth() + 1;
+      const day = d.getDate();
+      const w = weekDays[d.getDay()];
+      return y + '年' + m + '月' + day + '日 周' + w;
+    }
+
+    function getWeekRange(d) {
+      const day = d.getDay();
+      const diffToMonday = day === 0 ? -6 : 1 - day;
+      const monday = new Date(d);
+      monday.setDate(d.getDate() + diffToMonday);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      return { monday, sunday };
+    }
+
+    // ========== DATA OPERATIONS ==========
+    async function loadRecords() {
+      if (!sheetId) return;
+      setSyncStatus('syncing', '加载中...');
+      try {
+        const dateStr = formatDate(currentDate);
+        const qs = '?sheet_id=eq.' + encodeURIComponent(sheetId) +
+          '&date=eq.' + dateStr +
+          '&order=created_at.asc';
+        records = await apiGet('/ee_records' + qs);
+        setSyncStatus('synced', '已同步');
+      } catch (e) {
+        console.error(e);
+        setSyncStatus('error', '同步失败');
+      }
+    }
+
+    async function addRecord() {
+      const dateVal = document.getElementById('inputDate').value;
+      const projectVal = document.getElementById('inputProject').value.trim();
+      const contentVal = document.getElementById('inputContent').value.trim();
+      const hoursVal = parseFloat(document.getElementById('inputHours').value);
+
+      if (!dateVal) { alert('请选择日期'); return; }
+      if (!projectVal) { alert('请填写项目名称'); return; }
+      if (!contentVal) { alert('请填写工作内容'); return; }
+      if (isNaN(hoursVal) || hoursVal <= 0) { alert('请填写有效的工时'); return; }
+      if (hoursVal > 24) { alert('工时不能超过24小时'); return; }
+
+      const record = {
+        id: Date.now(),
+        sheet_id: sheetId,
+        date: dateVal,
+        project_name: projectVal,
+        work_type: document.getElementById('inputWorkType').value,
+        work_content: contentVal,
+        work_hours: hoursVal,
+        status: document.getElementById('inputStatus').value,
+        note: document.getElementById('inputNote').value.trim()
+      };
+
+      setSyncStatus('syncing', '保存中...');
+      try {
+        await apiPost('/ee_records', record, false);
+        records.push(record);
+        document.getElementById('inputProject').value = '';
+        document.getElementById('inputContent').value = '';
+        document.getElementById('inputHours').value = '';
+        document.getElementById('inputNote').value = '';
+        setSyncStatus('synced', '已同步');
+        renderAll();
+      } catch (e) {
+        console.error(e);
+        setSyncStatus('error', '保存失败');
+        alert('保存失败，请检查网络后重试');
+      }
+    }
+
+    async function deleteRecord(id) {
+      if (!confirm('确定删除该条工作记录吗？')) return;
+      setSyncStatus('syncing', '删除中...');
+      try {
+        await apiDelete('/ee_records?id=eq.' + id);
+        records = records.filter(r => r.id !== id);
+        setSyncStatus('synced', '已同步');
+        renderAll();
+      } catch (e) {
+        console.error(e);
+        setSyncStatus('error', '删除失败');
+        alert('删除失败，请检查网络后重试');
+      }
+    }
+
+    // ========== DAY NAVIGATION ==========
+    async function prevDay() {
+      currentDate.setDate(currentDate.getDate() - 1);
+      await loadRecords();
+      renderAll();
+    }
+
+    async function nextDay() {
+      currentDate.setDate(currentDate.getDate() + 1);
+      await loadRecords();
+      renderAll();
+    }
+
+    async function goToToday() {
+      currentDate = new Date();
+      await loadRecords();
+      renderAll();
+    }
+
+    // ========== SHARE ==========
+    function copyShareLink() {
+      const url = window.location.href;
+      navigator.clipboard.writeText(url).then(() => {
+        const btn = document.getElementById('btnShare');
+        const origHTML = btn.innerHTML;
+        btn.innerHTML = '<span class="text-emerald-600">已复制链接 ✓</span>';
+        btn.className = 'text-xs px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 transition';
+        setTimeout(() => {
+          btn.innerHTML = origHTML;
+          btn.className = 'text-xs px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition flex items-center gap-1';
+        }, 2000);
+      }).catch(() => {
+        alert('复制失败，请手动复制浏览器地址栏 URL');
+      });
+    }
+
+    // ========== CALCULATIONS ==========
+    function calcSummary() {
+      let total = records.length;
+      let completed = 0;
+      let inProgress = 0;
+      let totalHours = 0;
+      records.forEach(r => {
+        if (r.status === '已完成') completed++;
+        else if (r.status === '进行中') inProgress++;
+        totalHours += Number(r.work_hours) || 0;
+      });
+      return {
+        total,
+        completed,
+        inProgress,
+        totalHours: Math.round(totalHours * 10) / 10
+      };
+    }
+
+    async function getWeekData() {
+      const { monday, sunday } = getWeekRange(currentDate);
+      const monStr = formatDate(monday);
+      const sunStr = formatDate(sunday);
+
+      try {
+        const qs = '?sheet_id=eq.' + encodeURIComponent(sheetId) +
+          '&date=gte.' + monStr + '&date=lte.' + sunStr +
+          '&order=date.asc';
+        const weekRecords = await apiGet('/ee_records' + qs);
+
+        const map = {};
+        for (let d = new Date(monday); d <= sunday; d.setDate(d.getDate() + 1)) {
+          map[formatDate(d)] = 0;
+        }
+        weekRecords.forEach(r => {
+          if (map[r.date] !== undefined) map[r.date]++;
+        });
+        return { map, monStr, sunStr, weekRecords };
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // ========== RENDER ==========
+    async function renderAll() {
+      renderSummary();
+      await renderChart();
+      renderRecords();
+      document.getElementById('inputDate').value = formatDate(currentDate);
+      document.getElementById('dayLabel').textContent = formatDateCN(currentDate);
+      document.getElementById('daySummary').textContent = formatDateCN(currentDate) + ' 工作记录';
+    }
+
+    function renderSummary() {
+      const { total, completed, inProgress, totalHours } = calcSummary();
+      document.getElementById('totalItems').textContent = total + ' 项';
+      document.getElementById('completedItems').textContent = completed + ' 项';
+      document.getElementById('inProgressItems').textContent = inProgress + ' 项';
+
+      const hoursEl = document.getElementById('totalHours');
+      hoursEl.textContent = totalHours.toFixed(1);
+      hoursEl.className = 'text-lg font-bold ' + (totalHours >= 8 ? 'text-emerald-600' : 'text-purple-600');
+    }
+
+    async function renderChart() {
+      const area = document.getElementById('chartArea');
+      document.getElementById('chartWeek').textContent = '';
+      area.innerHTML = '<span class="text-xs text-gray-300 self-center w-full text-center">加载中...</span>';
+
+      const data = await getWeekData();
+      if (!data) {
+        area.innerHTML = '<span class="text-xs text-gray-300 self-center w-full text-center">暂无数据</span>';
+        return;
+      }
+
+      const { map, monStr, sunStr } = data;
+      const weekDays = ['一', '二', '三', '四', '五', '六', '日'];
+      const entries = Object.entries(map);
+      const maxVal = Math.max(...Object.values(map), 1);
+
+      document.getElementById('chartWeek').textContent = monStr.slice(5) + ' ~ ' + sunStr.slice(5);
+
+      area.innerHTML = entries.map(([dateStr, count], i) => {
+        const h = Math.max((count / maxVal) * 100, count > 0 ? 5 : 0);
+        const isToday = dateStr === formatDate(currentDate);
+        const shortDate = dateStr.slice(5);
+        return `
+          <div class="flex flex-col items-center flex-shrink-0" style="width:42px">
+            <span class="text-[10px] text-gray-400 mb-1">${count > 0 ? count + '项' : ''}</span>
+            <div class="w-8 rounded-t ${isToday ? 'bg-blue-500' : count > 0 ? 'bg-blue-400' : 'bg-gray-100'}" style="height:${h}%;min-height:${count > 0 ? '4px' : '1px'}"></div>
+            <span class="text-[10px] mt-1 ${isToday ? 'text-blue-600 font-medium' : 'text-gray-500'}">${weekDays[i]}</span>
+            <span class="text-[9px] ${isToday ? 'text-blue-500' : 'text-gray-400'}">${shortDate}</span>
+          </div>`;
+      }).join('');
+    }
+
+    function renderRecords() {
+      const list = document.getElementById('recordsList');
+      const hint = document.getElementById('emptyHint');
+      const sorted = [...records].sort((a, b) => b.id - a.id);
+
+      if (sorted.length === 0) {
+        list.innerHTML = '';
+        hint.style.display = 'block';
+        return;
+      }
+
+      hint.style.display = 'none';
+
+      const statusColors = {
+        '已完成': 'bg-emerald-50 text-emerald-600',
+        '进行中': 'bg-amber-50 text-amber-600',
+        '待处理': 'bg-gray-100 text-gray-500'
+      };
+
+      const typeColors = {
+        '巡检': 'bg-sky-50 text-sky-600',
+        '维修': 'bg-rose-50 text-rose-600',
+        '安装': 'bg-indigo-50 text-indigo-600',
+        '调试': 'bg-purple-50 text-purple-600',
+        '设计': 'bg-teal-50 text-teal-600',
+        '验收': 'bg-orange-50 text-orange-600',
+        '培训': 'bg-cyan-50 text-cyan-600',
+        '其他': 'bg-gray-50 text-gray-600'
+      };
+
+      list.innerHTML = sorted.map((r, idx) => `
+        <div class="flex items-center px-4 py-3 gap-3 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}">
+          <span class="text-xs px-2 py-0.5 rounded font-medium w-14 text-center flex-shrink-0 ${typeColors[r.work_type] || 'bg-gray-50 text-gray-600'}">${r.work_type}</span>
+          <span class="font-medium text-gray-800 w-24 flex-shrink-0 truncate" title="${r.project_name}">${r.project_name}</span>
+          <span class="flex-1 text-gray-600 truncate min-w-0" title="${r.work_content}">${r.work_content}</span>
+          <span class="text-xs font-medium text-gray-500 w-12 text-right flex-shrink-0">${Number(r.work_hours).toFixed(1)}h</span>
+          <span class="text-xs px-2 py-0.5 rounded-full font-medium w-16 text-center flex-shrink-0 ${statusColors[r.status] || 'bg-gray-50 text-gray-500'}">${r.status}</span>
+          ${r.note ? `<span class="text-xs text-gray-400 w-20 truncate flex-shrink-0" title="${r.note}">📝 ${r.note}</span>` : '<span class="w-20 flex-shrink-0"></span>'}
+          <button onclick="deleteRecord(${r.id})" class="w-6 h-6 flex items-center justify-center rounded text-gray-300 hover:text-rose-500 hover:bg-rose-50 transition flex-shrink-0 text-lg leading-none">&times;</button>
+        </div>
+      `).join('');
+    }
+
+    // ========== INIT ==========
+    async function init() {
+      document.getElementById('inputDate').value = formatDate(currentDate);
+      document.getElementById('dayLabel').textContent = formatDateCN(currentDate);
+
+      if (SUPABASE_URL === 'YOUR_SUPABASE_URL' || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY') {
+        setSyncStatus('error', '请先配置 SUPABASE_URL 和 SUPABASE_ANON_KEY');
+        document.getElementById('btnShare').style.display = 'none';
+        renderAll();
+        return;
+      }
+
+      setSyncStatus('syncing', '连接中...');
+
+      try {
+        sheetId = getSheetIdFromURL();
+        if (sheetId) {
+          const exists = await verifySheet(sheetId);
+          if (!exists) {
+            setSyncStatus('error', '报表不存在，将创建新表');
+            sheetId = null;
+          }
+        }
+        if (!sheetId) {
+          await createSheet();
+        }
+        await loadRecords();
+        renderAll();
+      } catch (e) {
+        console.error(e);
+        setSyncStatus('error', '连接失败（请确保已创建 ee_sheets 和 ee_records 表）');
+      }
+    }
+
+    // ========== EXPORT GLOBALS ==========
+    window.prevDay = prevDay;
+    window.nextDay = nextDay;
+    window.goToToday = goToToday;
+    window.addRecord = addRecord;
+    window.deleteRecord = deleteRecord;
+    window.copyShareLink = copyShareLink;
+    init();
+  </script>
+</body>
+</html>
